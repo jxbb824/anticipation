@@ -175,3 +175,8 @@ cython_debug/
 
 tmp.*
 *.ipynb
+*.slurm
+test.*
+*.out
+datasets/
+mytraintest/
