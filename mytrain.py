@@ -7,6 +7,7 @@ from torch.utils.data import Dataset
 import logging
 import os
 from typing import Optional, Tuple
+# import wandb 
 
 logging.basicConfig(level=logging.INFO)
 
@@ -93,26 +94,29 @@ def main():
     valid_file = "/home/xiruij/anticipation/datasets/lakhmidi/valid.txt"
     
     # Load datasets with tokenizer
-    train_dataset = TextDataset(train_file, num_samples=20000)
-    valid_dataset = TextDataset(valid_file, num_samples=1000)
+    train_dataset = TextDataset(train_file)
+    valid_dataset = TextDataset(valid_file, num_samples=2000)
     
     # Training arguments
     training_args = TrainingArguments(
         output_dir="./mytraintest/gpt2_output",          # Output directory
         overwrite_output_dir=True,           # Overwrite output directory
-        num_train_epochs=1,                  # Number of training epochs
+        num_train_epochs=3,                  # Number of training epochs
         per_device_train_batch_size=8,       # Training batch size
         per_device_eval_batch_size=8,        # Evaluation batch size
-        eval_steps=1000,                     # Evaluate every 1000 steps
-        save_steps=2000,                     # Save every 2000 steps
+        eval_steps=10000,                     # Evaluate every 1000 steps
+        save_steps=20000,                     # Save every 2000 steps
         logging_dir="./mytraintest/logs",    # Logging directory
-        logging_steps=200,                   # Log every 200 steps
+        logging_steps=2000,                   # Log every 200 steps
         evaluation_strategy="steps",         # Evaluation strategy
         save_total_limit=2,                  # Maximum number of checkpoints to save
         load_best_model_at_end=True,         # Load best model at the end
         fp16=True,
-        learning_rate=5e-5,
-        warmup_steps=500,
+        learning_rate=6e-4,
+        warmup_steps=10000,
+        lr_scheduler_type="cosine",
+        # report_to=["wandb"],
+        # run_name="gpt2-training-run",
     )
     
     # Use standard DataCollatorForLanguageModeling

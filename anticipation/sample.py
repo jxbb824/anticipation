@@ -173,7 +173,7 @@ def generate(model, start_time, end_time, inputs=None, controls=None, top_p=1.0,
                     # nothing more to anticipate
                     anticipated_time = math.inf
 
-            new_token = add_token(model, z, tokens, top_p, max(start_time,current_time))
+            new_token = add_token(model, z, tokens, top_p, max(start_time,current_time), debug)
             new_time = new_token[0] - TIME_OFFSET
             if new_time >= end_time:
                 break
