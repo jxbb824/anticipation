@@ -4,9 +4,9 @@ import shutil
 import argparse
 from glob import glob
 from tqdm import tqdm
-from concurrent.futures import ProcessPoolExecutor
+import threading
+import queue
 
-# 默认处理线程数，可以根据实际情况调整
 WORKERS = 8
 
 def process_file(args):
@@ -29,6 +29,58 @@ def process_file(args):
     except Exception as e:
         print(f"Error processing {file_path}: {str(e)}")
         return 1
+
+class ThreadedFileProcessor:
+    def __init__(self, num_threads):
+        self.task_queue = queue.Queue()
+        self.results = []
+        self.lock = threading.Lock()
+        self.completed = 0
+        self.total = 0
+        self.pbar = None
+
+    def worker(self):
+        while True:
+            task = self.task_queue.get()
+            if task is None:  # Termination signal
+                self.task_queue.task_done()
+                break
+                
+            result = process_file(task)
+            
+            with self.lock:
+                self.results.append(result)
+                self.completed += 1
+                if self.pbar:
+                    self.pbar.update(1)
+            
+            self.task_queue.task_done()
+
+    def process_tasks(self, tasks, num_threads):
+        self.total = len(tasks)
+        self.pbar = tqdm(total=self.total)
+        
+        # Start worker threads
+        threads = []
+        for _ in range(num_threads):
+            t = threading.Thread(target=self.worker)
+            t.daemon = True
+            t.start()
+            threads.append(t)
+        
+        # Add tasks to the queue
+        for task in tasks:
+            self.task_queue.put(task)
+        
+        # Add termination signals
+        for _ in range(num_threads):
+            self.task_queue.put(None)
+        
+        # Wait for all tasks to complete
+        self.task_queue.join()
+        
+        self.pbar.close()
+        return self.results
 
 def split_dataset(source_dir, dest_dir, train_ratio=0.9, valid_ratio=0.05, test_ratio=0.05, 
                   copy=False, file_types=('*.mid', '*.midi'), workers=WORKERS):
@@ -74,7 +126,7 @@ def split_dataset(source_dir, dest_dir, train_ratio=0.9, valid_ratio=0.05, test_
     print(f"Validation files: {len(valid_files)}")
     print(f"Test files: {len(test_files)}")
     
-    # Prepare tasks for parallel processing
+    # Prepare tasks for sequential processing
     tasks = []
     
     # Process training files
@@ -119,10 +171,10 @@ def split_dataset(source_dir, dest_dir, train_ratio=0.9, valid_ratio=0.05, test_
         
         tasks.append((file_path, dest_path, copy))
     
-    # Process files in parallel
-    print(f"Processing {len(tasks)} files with {workers} workers...")
-    with ProcessPoolExecutor(max_workers=workers) as executor:
-        results = list(tqdm(executor.map(process_file, tasks), total=len(tasks)))
+    # Process files using multiple threads
+    print(f"Processing {len(tasks)} files with {workers} threads...")
+    processor = ThreadedFileProcessor(workers)
+    results = processor.process_tasks(tasks, workers)
     
     failures = sum(results)
     success_rate = (len(tasks) - failures) / len(tasks) * 100
