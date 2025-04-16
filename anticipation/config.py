@@ -35,9 +35,12 @@ MIN_TRACK_EVENTS = 100             # exclude very short tracks (less than 100 ev
 
 # LakhMIDI dataset splits
 
-LAKH_SPLITS = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
-LAKH_VALID = ['e']
-LAKH_TEST = ['f']
+# LAKH_SPLITS = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
+# LAKH_VALID = ['e']
+# LAKH_TEST = ['f']
+LAKH_SPLITS = ['song']
+LAKH_VALID = []
+LAKH_TEST = []
 
 # derived quantities
 

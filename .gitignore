@@ -180,3 +180,5 @@ test.*
 *.out
 datasets/
 mytraintest/
+finetune_output/
+generated_music/

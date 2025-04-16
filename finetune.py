@@ -74,21 +74,23 @@ class TextDataset(Dataset):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Fine-tune GPT-2 model')
-    parser.add_argument('--pretrained_model_path', type=str, required=True,
+    parser.add_argument('--pretrained_model_path', type=str, default='/home/xiruij/anticipation/mytraintest/gpt2_final_model/pytorch_model.bin',
                         help='Path to pretrained model')
     parser.add_argument('--train_file', type=str, 
-                        default='/home/xiruij/anticipation/datasets/lakhmidi/train.txt',
+                        default='/home/xiruij/anticipation/datasets/finetune/train.txt',
                         help='Path to training data')
     parser.add_argument('--valid_file', type=str, 
-                        default='/home/xiruij/anticipation/datasets/lakhmidi/valid.txt',
+                        default='/home/xiruij/anticipation/datasets/finetune/test.txt',
                         help='Path to validation data')
     parser.add_argument('--output_dir', type=str, 
                         default='./finetune_output',
                         help='Output directory for fine-tuned model')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=3,
                         help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=4,
                         help='Batch size for training')
+    parser.add_argument('--gradient_accumulation_steps', type=int, default=1,
+                        help='Number of steps to accumulate gradients before updating weights')
     parser.add_argument('--learning_rate', type=float, default=5e-5,
                         help='Learning rate for fine-tuning')
     return parser.parse_args()
@@ -103,7 +105,7 @@ def main():
     # Load pretrained model
     logging.info(f"Loading pretrained model from {args.pretrained_model_path}")
     try:
-        model = GPT2LMHeadModel.from_pretrained(args.pretrained_model_path)
+        model = GPT2LMHeadModel.from_pretrained('stanford-crfm/music-small-800k').cuda()
         logging.info("Successfully loaded pretrained model")
     except Exception as e:
         logging.error(f"Error loading model: {e}")
@@ -121,7 +123,7 @@ def main():
     
     # Load datasets
     train_dataset = TextDataset(args.train_file)
-    valid_dataset = TextDataset(args.valid_file, num_samples=1000)  # Reduced validation samples for faster evaluation
+    valid_dataset = TextDataset(args.valid_file, num_samples=100)  # Reduced validation samples for faster evaluation
     
     # Fine-tuning arguments - lower learning rate, fewer epochs
     training_args = TrainingArguments(
@@ -130,8 +132,8 @@ def main():
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
-        eval_steps=1000,                      # More frequent evaluation
-        save_steps=2000,
+        eval_steps=5000,                      # More frequent evaluation
+        save_steps=10000,
         logging_dir=f"{args.output_dir}/logs",
         logging_steps=500,
         evaluation_strategy="steps",
@@ -142,7 +144,7 @@ def main():
         warmup_ratio=0.1,                     # Use ratio instead of steps
         lr_scheduler_type="linear",           # Linear is often better for fine-tuning
         weight_decay=0.01,                    # Add some regularization
-        gradient_accumulation_steps=4,        # For effectively larger batch size
+        gradient_accumulation_steps=args.gradient_accumulation_steps,  # Use command-line argument
     )
     
     # Data collator
