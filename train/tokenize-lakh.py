@@ -24,7 +24,7 @@ def main(args):
     print(f'  min track events = {MIN_TRACK_EVENTS}')
 
     paths = [os.path.join(args.datadir, s) for s in LAKH_SPLITS]
-    files = [glob(f'{p}/*.compound.txt') for p in paths]
+    files = [sorted(glob(f'{p}/*.compound.txt')) for p in paths]
     outputs = [os.path.join(args.datadir, f'tokenized-events-{s}.txt') for s in LAKH_SPLITS]
 
     # don't augment the valid/test splits
@@ -33,8 +33,14 @@ def main(args):
     # parallel tokenization drops the last chunk of < M tokens
     # if concerned about waste: process larger groups of datafiles
     func = tokenize_ia if args.interarrival else tokenize
-    with Pool(processes=PREPROC_WORKERS, initargs=(RLock(),), initializer=tqdm.set_lock) as pool:
-        results = pool.starmap(func, zip(files, outputs, augment, range(len(LAKH_SPLITS))))
+    results = []
+    
+    for idx, (file_list, output_path, aug_factor) in enumerate(zip(files, outputs, augment)):
+        results.append(func(file_list, output_path, aug_factor, idx, debug=True))
+    
+    # Commented out parallel processing code
+    # with Pool(processes=PREPROC_WORKERS, initargs=(RLock(),), initializer=tqdm.set_lock) as pool:
+    #    results = pool.starmap(func, zip(files, outputs, augment, range(len(LAKH_SPLITS))))
 
     seq_count, rest_count, too_short, too_long, too_manyinstr, discarded_seqs, truncations \
             = (sum(x) for x in zip(*results))

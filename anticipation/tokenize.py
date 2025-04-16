@@ -144,7 +144,18 @@ def tokenize(datafiles, output, augment_factor, idx=0, debug=False):
 
     with open(output, 'w') as outfile:
         concatenated_tokens = []
+        current_music_id = None  # Track current music ID
+        
         for j, filename in tqdm(list(enumerate(datafiles)), desc=f'#{idx}', position=idx+1, leave=True):
+            # Extract music ID from filename
+            music_id = filename.split('/')[-1].split('__')[0]
+            
+            # If music ID changes, clear concatenated_tokens to avoid merging
+            if current_music_id is not None and current_music_id != music_id:
+                concatenated_tokens = []  # Discard remaining tokens from previous piece
+            
+            current_music_id = music_id
+            
             with open(filename, 'r') as f:
                 all_events, truncations, status = maybe_tokenize([int(token) for token in f.read().split()])
 
@@ -188,7 +199,11 @@ def tokenize(datafiles, output, augment_factor, idx=0, debug=False):
                 rest_count += sum(1 if tok == REST else 0 for tok in events[2::3])
                 tokens, controls = ops.anticipate(events, controls)
                 assert len(controls) == 0 # should have consumed all controls (because of padding)
-                tokens[0:0] = [SEPARATOR, SEPARATOR, SEPARATOR]
+                
+                # Only add SEPARATOR for non-no-augmentation cases
+                if k % 10 != 0:
+                    tokens[0:0] = [SEPARATOR, SEPARATOR, SEPARATOR]
+                
                 concatenated_tokens.extend(tokens)
 
                 # write out full sequences to file
@@ -203,10 +218,11 @@ def tokenize(datafiles, output, augment_factor, idx=0, debug=False):
                         stats[3] += 1
                         continue
 
-                    # if seq contains SEPARATOR, global controls describe the first sequence
+                    # Add global control
                     seq.insert(0, z)
 
-                    outfile.write(' '.join([str(tok) for tok in seq]) + '\n')
+                    # Add music ID at the end of the sequence
+                    outfile.write(' '.join([str(tok) for tok in seq]) + ' ' + music_id + '\n')
                     seqcount += 1
 
                     # grab the current augmentation controls if we didn't already

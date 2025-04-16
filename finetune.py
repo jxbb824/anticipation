@@ -40,7 +40,7 @@ class PassthroughTokenizer(PreTrainedTokenizer):
 
     def _tokenize(self, text, **kwargs):
         tokens = np.fromstring(text, dtype=int, sep=" ")
-        return tokens
+        return tokens[:-1]
 
     def _convert_token_to_id(self, token: str) -> int:
         return int(token)
@@ -77,21 +77,21 @@ def parse_args():
     parser.add_argument('--pretrained_model_path', type=str, default='/home/xiruij/anticipation/mytraintest/gpt2_final_model/pytorch_model.bin',
                         help='Path to pretrained model')
     parser.add_argument('--train_file', type=str, 
-                        default='/home/xiruij/anticipation/datasets/finetune/train.txt',
+                        default='/home/xiruij/anticipation/datasets/finetune_subset/train.txt',
                         help='Path to training data')
     parser.add_argument('--valid_file', type=str, 
-                        default='/home/xiruij/anticipation/datasets/finetune/test.txt',
+                        default='/home/xiruij/anticipation/datasets/finetune_subset/test.txt',
                         help='Path to validation data')
     parser.add_argument('--output_dir', type=str, 
-                        default='./finetune_output',
+                        default='./finetune_subset_output',
                         help='Output directory for fine-tuned model')
-    parser.add_argument('--epochs', type=int, default=3,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=4,
                         help='Batch size for training')
     parser.add_argument('--gradient_accumulation_steps', type=int, default=1,
                         help='Number of steps to accumulate gradients before updating weights')
-    parser.add_argument('--learning_rate', type=float, default=5e-5,
+    parser.add_argument('--learning_rate', type=float, default=2e-5,
                         help='Learning rate for fine-tuning')
     return parser.parse_args()
 
@@ -132,10 +132,10 @@ def main():
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
-        eval_steps=5000,                      # More frequent evaluation
+        eval_steps=500,                      # More frequent evaluation
         save_steps=10000,
         logging_dir=f"{args.output_dir}/logs",
-        logging_steps=500,
+        logging_steps=100,
         evaluation_strategy="steps",
         save_total_limit=2,
         load_best_model_at_end=True,
@@ -144,7 +144,8 @@ def main():
         warmup_ratio=0.1,                     # Use ratio instead of steps
         lr_scheduler_type="linear",           # Linear is often better for fine-tuning
         weight_decay=0.01,                    # Add some regularization
-        gradient_accumulation_steps=args.gradient_accumulation_steps,  # Use command-line argument
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        log_level="info"  # Use command-line argument
     )
     
     # Data collator

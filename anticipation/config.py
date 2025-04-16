@@ -30,8 +30,8 @@ PREPROC_WORKERS = 16
 COMPOUND_SIZE = 5                  # event size in the intermediate compound tokenization
 MAX_TRACK_INSTR = 16               # exclude tracks with large numbers of instruments
 MAX_TRACK_TIME_IN_SECONDS = 3600   # exclude very long tracks (longer than 1 hour)
-MIN_TRACK_TIME_IN_SECONDS = 10     # exclude very short tracks (less than 10 seconds)
-MIN_TRACK_EVENTS = 100             # exclude very short tracks (less than 100 events)
+MIN_TRACK_TIME_IN_SECONDS = 1     # exclude very short tracks (less than 10 seconds)
+MIN_TRACK_EVENTS = 10             # exclude very short tracks (less than 100 events)
 
 # LakhMIDI dataset splits
 
