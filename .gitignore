@@ -183,3 +183,5 @@ mytraintest/
 finetune_output/
 generated_music/
 finetune_subset_output/
+out/
+checkpoints/
