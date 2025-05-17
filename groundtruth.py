@@ -13,14 +13,14 @@ class TextDataset(Dataset):
         self.examples = []
         self.max_length = max_length
         
-        logging.info(f"Loading dataset: {file_path}")
+        print(f"Loading dataset: {file_path}")
         with open(file_path, 'r', encoding='utf-8') as f:
             for i, line in enumerate(f):
                 if num_samples is not None and i >= num_samples:
                     break
                 self.examples.append(line.strip())
         
-        logging.info(f"Loaded {len(self.examples)} samples from {file_path}")
+        print(f"Loaded {len(self.examples)} samples from {file_path}")
     
     def __len__(self):
         return len(self.examples)
@@ -32,7 +32,8 @@ class TextDataset(Dataset):
         
         # For Causal LM, labels are typically the same as input_ids
         return {"input_ids": torch.tensor(input_ids, dtype=torch.long),
-                "labels": torch.tensor(input_ids, dtype=torch.long)}
+                "labels": torch.tensor(input_ids, dtype=torch.long),
+                "attention_mask": torch.ones_like(torch.tensor(input_ids, dtype=torch.long))}
 
 
 def parse_args():
@@ -110,7 +111,7 @@ def main():
 
         result_iter = []
         for _, batch in enumerate(eval_dataloader):
-            result_iter.append(f(flatten_params(params_dict), batch).detach())
+            result_iter.append(f(flatten_params(params), batch).detach())
         
         result_iter_cpu = [res.cpu() for res in result_iter]
         result_iter_stacked = torch.stack(result_iter_cpu)
@@ -118,6 +119,7 @@ def main():
 
     final_result = torch.stack(result_list)
 
+    print(f"Final result: {final_result}")
     output_gt_file = os.path.join(args.output_dir, "gt.pt")
     torch.save(final_result, output_gt_file)
     print(f"Results saved to {output_gt_file}")
