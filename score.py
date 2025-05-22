@@ -46,7 +46,7 @@ def parse_args():
                         help='Directory containing checkpoints and for saving results.')
     parser.add_argument('--batch_size', type=int, default=2,
                         help='Batch size for dataloaders.')
-    parser.add_argument('--num_checkpoints', type=int, default=5,
+    parser.add_argument('--num_checkpoints', type=int, default=10,
                         help='Number of checkpoints to use.')
     parser.add_argument('--seed', type=int, default=42, help="Random seed.")
     return parser.parse_args()
@@ -65,7 +65,7 @@ def main():
     print(f"Using device: {device}")
 
     train_dataset = TextDataset(args.train_file)
-    eval_dataset = TextDataset(args.valid_file, num_samples=100)
+    eval_dataset = TextDataset(args.valid_file, num_samples=300)
     
     if len(train_dataset) == 0 or len(eval_dataset) == 0:
         print(f"Error: Dataset is empty or failed to load. Exiting.")

@@ -31,7 +31,7 @@ def calculate_one(path):
     print("score shape:", score.shape)
 
     nodes_str = []
-    for i in range(50):
+    for i in range(30):
         nodes_str.append(f"./checkpoints/{i}/train_index.csv")
 
     full_nodes = [i for i in range(12256)]
@@ -57,7 +57,7 @@ def calculate_one(path):
 
     res = 0
     counter = 0
-    for i in range(100):
+    for i in range(300):
         tmp = spearmanr(np.array([approx_output[k][i] for k in range(len(approx_output))]),
                         np.array([loss_list[k][i].numpy() for k in range(len(loss_list))])).statistic
         if np.isnan(tmp):

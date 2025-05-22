@@ -16,14 +16,16 @@ logging.basicConfig(level=logging.INFO)
 # PassthroughTokenizer implementation
 class PassthroughTokenizer(PreTrainedTokenizer):
     def __init__(self, vocab_size, **kwargs):
-        super().__init__(**kwargs)
-        self._vocab = {i: i for i in range(vocab_size)}
         self._vocab_size = vocab_size
-        self._eos = 55025 # self._vocab_size - 1
+        self._vocab = {i: i for i in range(self._vocab_size)}
+        self._eos = 55025
         self._eos_token = str(self._eos)
-        # Ensure pad_token is set for DataCollatorForLanguageModeling
-        if self.pad_token is None and self.eos_token is not None:
-             self.pad_token = self.eos_token
+
+        super().__init__(
+            eos_token=self._eos_token,
+            pad_token=self._eos_token,
+            **kwargs
+        )
         
     @property
     def vocab_size(self) -> int:
@@ -94,7 +96,7 @@ def parse_args():
     parser.add_argument('--output_dir', type=str, 
                         default='./finetune_subset_output',
                         help='Output directory for fine-tuned model')
-    parser.add_argument('--epochs', type=int, default=2,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=4,
                         help='Batch size for training')
@@ -201,7 +203,7 @@ def main():
         # save_steps=10000,
         logging_dir=f"{args.output_dir}/logs",
         logging_steps=500,
-        evaluation_strategy="steps" if valid_dataset is not None else "no",
+        eval_strategy="steps" if valid_dataset is not None else "no",
         # save_total_limit=2,
         # load_best_model_at_end=True,
         fp16=True,

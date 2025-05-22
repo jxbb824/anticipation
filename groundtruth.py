@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument('--valid_file', type=str, required=True,
                         help='Path to validation data.')
     parser.add_argument('--output_dir', type=str, required=True,
-                        help='Directory containing checkpoints (0-49) and for saving results.')
+                        help='Directory containing checkpoints and for saving results.')
     parser.add_argument('--batch_size', type=int, default=1, # Snippet implies batch_size=1 for eval_dataloader
                         help='Batch size for evaluation dataloader.')
     parser.add_argument('--seed', type=int, default=42, help="Random seed.")
@@ -61,7 +61,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    eval_dataset = TextDataset(args.valid_file, num_samples=100) 
+    eval_dataset = TextDataset(args.valid_file, num_samples=300) 
     if len(eval_dataset) == 0:
         print(f"Error: Validation dataset from {args.valid_file} is empty or failed to load. Exiting.")
         return
@@ -77,7 +77,7 @@ def main():
         print(f"Error: Output directory {args.output_dir} not found. Exiting.")
         return
         
-    checkpoints = [os.path.join(args.output_dir, str(i)) for i in range(50)]
+    checkpoints = [os.path.join(args.output_dir, str(i)) for i in range(30)]
     result_list = []
 
     for checkpoint_path in checkpoints:
