@@ -61,7 +61,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    eval_dataset = TextDataset(args.valid_file, num_samples=300) 
+    eval_dataset = TextDataset(args.valid_file, num_samples=500) 
     if len(eval_dataset) == 0:
         print(f"Error: Validation dataset from {args.valid_file} is empty or failed to load. Exiting.")
         return

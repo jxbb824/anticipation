@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import os
+import glob
 
 from tqdm import tqdm
 import numpy as np
@@ -57,7 +58,7 @@ def calculate_one(path):
 
     res = 0
     counter = 0
-    for i in range(300):
+    for i in range(500):
         tmp = spearmanr(np.array([approx_output[k][i] for k in range(len(approx_output))]),
                         np.array([loss_list[k][i].numpy() for k in range(len(loss_list))])).statistic
         if np.isnan(tmp):
@@ -72,5 +73,13 @@ def calculate_one(path):
 
 
 if __name__ == "__main__":
-    path = "/home/xiruij/anticipation/checkpoints/score.pt"
-    print(calculate_one(path)[0])
+    # path = "/home/xiruij/anticipation/checkpoints/score.pt"
+    # print(calculate_one(path)[0])
+    grid_search_dir = "/home/xiruij/anticipation/checkpoints/grid_search"
+    file_paths = glob.glob(os.path.join(grid_search_dir, "*.pt"))
+    
+    for path in file_paths:
+        print(f"Processing file: {path}")
+        result = calculate_one(path)[0]
+        print(f"Result for {os.path.basename(path)}: {result}")
+        print("-" * 50)

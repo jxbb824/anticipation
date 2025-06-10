@@ -88,7 +88,7 @@ def parse_args():
     parser.add_argument('--pretrained_model_path', type=str, default='stanford-crfm/music-small-800k',
                         help='Path to pretrained model or model identifier from huggingface.co/models.')
     parser.add_argument('--train_file', type=str, 
-                        default='/home/xiruij/anticipation/datasets/finetune_subset/train.txt',
+                        default='/home/xiruij/anticipation/datasets/finetune_subset/train_small.txt',
                         help='Path to training data')
     parser.add_argument('--valid_file', type=str, 
                         default='/home/xiruij/anticipation/datasets/finetune_subset/test.txt',
@@ -96,7 +96,7 @@ def parse_args():
     parser.add_argument('--output_dir', type=str, 
                         default='./finetune_subset_output',
                         help='Output directory for fine-tuned model')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=3,
                         help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=4,
                         help='Batch size for training')
