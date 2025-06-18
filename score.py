@@ -65,7 +65,7 @@ def main():
     print(f"Using device: {device}")
 
     train_dataset = TextDataset(args.train_file)
-    eval_dataset = TextDataset(args.valid_file, num_samples=500)
+    eval_dataset = TextDataset(args.valid_file, num_samples=100)
     
     if len(train_dataset) == 0 or len(eval_dataset) == 0:
         print(f"Error: Dataset is empty or failed to load. Exiting.")
@@ -126,7 +126,7 @@ def main():
     
     projector_kwargs = {
         "device": device,
-        "proj_dim": 2048,
+        "proj_dim": 8192,
         "use_half_precision": False,
     }
     

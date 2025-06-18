@@ -186,3 +186,6 @@ finetune_subset_output/
 out/
 checkpoints/
 checkpoints_old/
+checkpoints_clap/
+*.png
+*.wav
