@@ -148,7 +148,7 @@ def tokenize(datafiles, output, augment_factor, idx=0, debug=False):
         
         for j, filename in tqdm(list(enumerate(datafiles)), desc=f'#{idx}', position=idx+1, leave=True):
             # Extract music ID from filename
-            music_id = filename.split('/')[-1].split('__')[0]
+            music_id = filename.split('/')[-1][:-len('.mid.compound.txt')].rsplit('__', 1)[0]
             
             # If music ID changes, clear concatenated_tokens to avoid merging
             if current_music_id is not None and current_music_id != music_id:
@@ -203,7 +203,11 @@ def tokenize(datafiles, output, augment_factor, idx=0, debug=False):
                 # Only add SEPARATOR for non-no-augmentation cases
                 if k % 10 != 0:
                     tokens[0:0] = [SEPARATOR, SEPARATOR, SEPARATOR]
-                
+
+                if len(concatenated_tokens) > 0:
+                    time_offset = ops.max_time(concatenated_tokens, seconds=False) + 10
+                    tokens = ops.translate(tokens, time_offset, seconds=False)
+
                 concatenated_tokens.extend(tokens)
 
                 # write out full sequences to file
