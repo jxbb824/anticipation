@@ -187,5 +187,6 @@ out/
 checkpoints/
 checkpoints_old/
 checkpoints_clap/
+checkpoints_clap_new/
 *.png
 *.wav

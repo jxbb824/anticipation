@@ -40,9 +40,9 @@ def get_audio_features_batch(audio_paths, model, feature_extractor, device, targ
     return audio_features
 
 def main():
-    train_audio_dir = "/home/xiruij/anticipation/datasets/clap/song_train"
-    test_audio_dir = "/home/xiruij/anticipation/datasets/clap/song_test"
-    output_file = "/home/xiruij/anticipation/checkpoints_clap/audio_similarity_matrix.pt"
+    train_audio_dir = "/home/xiruij/anticipation/datasets/finetune_subset/song_train_wav"
+    test_audio_dir = "/home/xiruij/anticipation/datasets/finetune_subset/song_test_wav"
+    output_file = "/home/xiruij/anticipation/checkpoints_clap_new/audio_similarity_matrix.pt"
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -57,7 +57,9 @@ def main():
     # Load datasets using audiofolder, which preserves order if files are sorted by name
     # Ensure files are .wav and get their paths, then sort them
     train_files = sorted([os.path.join(train_audio_dir, f) for f in os.listdir(train_audio_dir) if f.endswith(".wav")])
-    test_files = sorted([os.path.join(test_audio_dir, f) for f in os.listdir(test_audio_dir) if f.endswith(".wav")])[:100]
+    # test_files = sorted([os.path.join(test_audio_dir, f) for f in os.listdir(test_audio_dir) if f.endswith(".wav")])[:100]
+    test_files = sorted([os.path.join(test_audio_dir, f) for f in os.listdir(test_audio_dir) if f.endswith(".wav")])
+
 
     if not train_files:
         print(f"No .wav files found in {train_audio_dir}")

@@ -112,39 +112,114 @@ def calculate_and_visualize_correlations(matrix_file1, matrix_file2, output_visu
             print(f"Error: column_to_visualize_scatter index {column_to_visualize_scatter} is out of bounds for {num_cols} columns.")
 
 
+def calculate_and_visualize_correlations_by_rank(matrix_file1, matrix_file2, output_visualization_path):
+    """
+    Loads two matrices, and for each column, sorts the rows based on the score matrix.
+    Then, it calculates Pearson correlations for different rank groups of scores
+    (Top 20, 20-50, 50-100, 100-200, 200-500).
+    Finally, it visualizes the distribution of these correlations for each rank group using a box plot.
+    """
+    print(f"Loading tensor from: {matrix_file1}")
+    try:
+        tensor1 = torch.load(matrix_file1, map_location=torch.device('cpu'))
+    except FileNotFoundError:
+        print(f"Error: File not found at {matrix_file1}")
+        return
+    except Exception as e:
+        print(f"Error loading {matrix_file1}: {e}")
+        return
+
+    print(f"Loading tensor from: {matrix_file2}")
+    try:
+        tensor2 = torch.load(matrix_file2, map_location=torch.device('cpu'))
+    except FileNotFoundError:
+        print(f"Error: File not found at {matrix_file2}")
+        return
+    except Exception as e:
+        print(f"Error loading {matrix_file2}: {e}")
+        return
+
+    if tensor1.shape != tensor2.shape:
+        print(f"Error: Tensor shapes do not match. Shape 1: {tensor1.shape}, Shape 2: {tensor2.shape}")
+        return
+
+    num_rows = tensor1.shape[0]
+    num_cols = tensor1.shape[1]
+
+    rank_labels = ['Top 50', '50-100', '100-200', '200-500', '500+']
+    rank_bins = [(0, 50), (50, 100), (100, 200), (200, 500), (500, num_rows)]
+    
+    if num_rows < rank_bins[-1][1]:
+        print(f"Error: Number of rows ({num_rows}) is less than the maximum required rank (500).")
+        return
+
+    correlations_by_rank = {label: [] for label in rank_labels}
+
+    print(f"Calculating Pearson correlation for {num_cols} columns across different rank bins...")
+    for i in range(num_cols):
+        col1 = tensor1[:, i]
+        col2 = tensor2[:, i]
+
+        # Sort based on col2 (score) in descending order
+        sorted_indices = torch.argsort(col2, descending=True)
+        sorted_col1 = col1[sorted_indices].numpy()
+        sorted_col2 = col2[sorted_indices].numpy()
+
+        for label, (start, end) in zip(rank_labels, rank_bins):
+            slice1 = sorted_col1[start:end]
+            slice2 = sorted_col2[start:end]
+
+            if np.std(slice1) == 0 or np.std(slice2) == 0:
+                correlation = np.nan
+            else:
+                correlation, _ = pearsonr(slice1, slice2)
+            
+            if not np.isnan(correlation):
+                correlations_by_rank[label].append(correlation)
+
+    # Visualization
+    plt.figure(figsize=(12, 8))
+    
+    data_to_plot = [correlations_by_rank[label] for label in rank_labels]
+    
+    plot_data = []
+    plot_labels = []
+    for label, data in zip(rank_labels, data_to_plot):
+        if data:
+            plot_data.append(data)
+            plot_labels.append(f"{label}\n(n={len(data)})")
+        else:
+            print(f"Warning: No valid correlations for rank group '{label}'. Skipping in plot.")
+
+    if not plot_data:
+        print("Error: No data to plot. All correlation calculations resulted in NaN.")
+        return
+
+    plt.boxplot(plot_data, labels=plot_labels)
+    
+    plt.title('Distribution of Pearson Correlations by Score Rank')
+    plt.xlabel('Score Rank Group')
+    plt.ylabel('Pearson Correlation Coefficient')
+    plt.grid(True, linestyle='--', alpha=0.7)
+    
+    try:
+        plt.savefig(output_visualization_path)
+        print(f"Box plot visualization saved to {output_visualization_path}")
+        plt.close()
+    except Exception as e:
+        print(f"Error saving box plot visualization: {e}")
+
+
 def main():
     # Define file paths
-    similarity_matrix_path = "/home/xiruij/anticipation/checkpoints_clap/audio_similarity_matrix.pt"
-    score_matrix_path = "/home/xiruij/anticipation/checkpoints_clap/score.pt"
-    visualization_output_path = "/home/xiruij/anticipation/column_correlations_visualization.png"
+    similarity_matrix_path = "/home/xiruij/anticipation/checkpoints_clap_new/audio_similarity_matrix.pt"
+    score_matrix_path = "/home/xiruij/anticipation/checkpoints_clap_new/score.pt"
+    visualization_output_path = "/home/xiruij/anticipation/correlations_by_rank_boxplot.png"
     
-    # Specify which column to create a scatter plot for (e.g., 0 for the first column)
-    # Set to None if you don't want a scatter plot for any specific column.
-    column_for_scatter = 35
-    scatter_plot_file_path = f"/home/xiruij/anticipation/scatter_plot_column_{column_for_scatter}.png" if column_for_scatter is not None else None
-    
-    # Create checkpoints_clap directory if it doesn't exist, for dummy file creation if needed for testing
-    # os.makedirs(os.path.dirname(similarity_matrix_path), exist_ok=True)
-    
-    # Example: Create dummy files for testing if they don't exist
-    # This part is for demonstration; in a real scenario, these files would already exist.
-    # if not os.path.exists(similarity_matrix_path):
-    #     print(f"Creating dummy file: {similarity_matrix_path}")
-    #     torch.save(torch.rand(100, 50), similarity_matrix_path) # Example shape: 100 rows, 50 columns
-    # if not os.path.exists(score_matrix_path):
-    #     print(f"Creating dummy file: {score_matrix_path}")
-    #     # Create a tensor that has some correlation with the first one
-    #     dummy_tensor1 = torch.load(similarity_matrix_path)
-    #     noise = torch.rand(100,50) * 0.5
-    #     torch.save(dummy_tensor1 * 0.8 + noise, score_matrix_path)
-
-
-    calculate_and_visualize_correlations(
+    calculate_and_visualize_correlations_by_rank(
         similarity_matrix_path, 
         score_matrix_path, 
-        visualization_output_path,
-        column_to_visualize_scatter=column_for_scatter,
-        scatter_plot_output_path=scatter_plot_file_path
+        visualization_output_path
     )
 
 if __name__ == "__main__":
