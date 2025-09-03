@@ -3,16 +3,24 @@ from multiprocessing import Pool
 from midi2audio import FluidSynth
 from anticipation.convert import events_to_midi
 import time
+import argparse
+from pydub import AudioSegment
+import tempfile
+
+# --- Argument Parser ---
+parser = argparse.ArgumentParser(description='Convert event sequences from a text file to audio files (WAV or MP3).')
+parser.add_argument('--format', type=str, default='wav', choices=['wav', 'mp3'], help='Output audio format (wav or mp3).')
+args = parser.parse_args()
 
 # Define file paths
-input_file = '/home/xiruij/anticipation/datasets/finetune_subset/test_v2.txt'
-output_dir = '/home/xiruij/anticipation/datasets/finetune_subset/song_test_wav'
+input_file = '/home/xiruij/anticipation/datasets/finetune/test_v2.txt'
+output_dir = f'/home/xiruij/anticipation/datasets/finetune/song_test_{args.format}'
 
 # Create output directory if it doesn't exist
 os.makedirs(output_dir, exist_ok=True)
 
-# Function to convert events to WAV
-def convert_events_to_wav(item):
+# Function to convert events to audio
+def convert_events_to_audio(item):
     index, line, output_path = item
     events = line.split()
     events = events[1:-1]  # Remove first and last tokens
@@ -21,16 +29,35 @@ def convert_events_to_wav(item):
     # Convert events to MIDI
     mid = events_to_midi(events)
     
-    # Create temporary MIDI file
-    temp_midi_path = f"/tmp/temp_{index}.mid"
-    mid.save(temp_midi_path)
-    
-    # Convert MIDI to WAV
-    fs = FluidSynth()  # Create a FluidSynth instance for each process
-    fs.midi_to_audio(temp_midi_path, output_path)
-    
-    # Clean up temporary MIDI file
-    os.remove(temp_midi_path)
+    # Create temporary MIDI file in a process-safe way
+    with tempfile.NamedTemporaryFile(suffix=".mid", delete=False) as temp_midi_file:
+        temp_midi_path = temp_midi_file.name
+        mid.save(temp_midi_path)
+
+    fs = FluidSynth()
+
+    try:
+        if args.format == 'mp3':
+            # Create a temporary path for the WAV file
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_wav_file:
+                temp_wav_path = temp_wav_file.name
+            
+            # 1. Convert MIDI to WAV
+            fs.midi_to_audio(temp_midi_path, temp_wav_path)
+            
+            # 2. Convert WAV to MP3
+            audio = AudioSegment.from_wav(temp_wav_path)
+            audio.export(output_path, format="mp3")
+            
+            # 3. Clean up temporary WAV file
+            os.remove(temp_wav_path)
+        else: # 'wav' format
+            # Convert MIDI directly to WAV
+            fs.midi_to_audio(temp_midi_path, output_path)
+
+    finally:
+        # Clean up temporary MIDI file
+        os.remove(temp_midi_path)
     
     return index, output_path
 
@@ -44,7 +71,7 @@ for i, line in enumerate(lines):
     line = line.strip()
     if line:  # Skip empty lines
         # Create output filename with sequential numbering
-        output_filename = f"{i:06d}.wav"
+        output_filename = f"{i:06d}.{args.format}"
         output_path = os.path.join(output_dir, output_filename)
         
         # Add to conversion tasks
@@ -53,12 +80,12 @@ for i, line in enumerate(lines):
 # Process conversions in parallel
 start_time = time.time()
 num_workers = 8
-print(f"Starting conversion of {len(conversion_tasks)} files using {num_workers} workers...")
+print(f"Starting conversion of {len(conversion_tasks)} files to {args.format.upper()} using {num_workers} workers...")
 
 # Use multiprocessing to convert files
 with Pool(processes=num_workers) as pool:
-    results = pool.map(convert_events_to_wav, conversion_tasks)
+    results = pool.map(convert_events_to_audio, conversion_tasks)
 
 elapsed_time = time.time() - start_time
-print(f"Conversion complete. Generated {len(results)} WAV files in {output_dir}")
+print(f"Conversion complete. Generated {len(results)} {args.format.upper()} files in {output_dir}")
 print(f"Processing time: {elapsed_time:.2f} seconds")

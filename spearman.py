@@ -33,9 +33,9 @@ def calculate_one(path):
 
     nodes_str = []
     for i in range(30):
-        nodes_str.append(f"./checkpoints/{i}/train_index.csv")
+        nodes_str.append(f"./checkpoints_subset_large/{i}/train_index.csv")
 
-    full_nodes = [i for i in range(12256)]
+    full_nodes = [i for i in range(28000)]
 
     node_list = []
     for node_str in nodes_str:
@@ -45,7 +45,7 @@ def calculate_one(path):
             index.append(full_nodes.index(number))
         node_list.append(index)
 
-    loss_list = torch.load("/home/xiruij/anticipation/checkpoints/gt.pt", map_location=torch.device('cpu')).detach()
+    loss_list = torch.load("/home/xiruij/anticipation/checkpoints_subset_large/gt.pt", map_location=torch.device('cpu')).detach()
 
     approx_output = []
     for i in range(len(nodes_str)):
@@ -73,13 +73,13 @@ def calculate_one(path):
 
 
 if __name__ == "__main__":
-    # path = "/home/xiruij/anticipation/checkpoints/score.pt"
-    # print(calculate_one(path)[0])
-    grid_search_dir = "/home/xiruij/anticipation/checkpoints/grid_search"
-    file_paths = glob.glob(os.path.join(grid_search_dir, "*.pt"))
+    path = "/home/xiruij/anticipation/checkpoints_subset_large/score_LoGra_4096_gen.pt"
+    print(calculate_one(path)[0])
+    # grid_search_dir = "/home/xiruij/anticipation/checkpoints/grid_search"
+    # file_paths = glob.glob(os.path.join(grid_search_dir, "*.pt"))
     
-    for path in file_paths:
-        print(f"Processing file: {path}")
-        result = calculate_one(path)[0]
-        print(f"Result for {os.path.basename(path)}: {result}")
-        print("-" * 50)
+    # for path in file_paths:
+    #     print(f"Processing file: {path}")
+    #     result = calculate_one(path)[0]
+    #     print(f"Result for {os.path.basename(path)}: {result}")
+    #     print("-" * 50)

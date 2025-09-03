@@ -190,3 +190,5 @@ checkpoints_clap/
 checkpoints_clap_new/
 *.png
 *.wav
+extracted_music_samples/
+checkpoints_subset_large/

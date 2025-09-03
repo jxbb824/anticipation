@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-def analyze_rank_similarity(score_matrix_path, similarity_matrix_path, output_plot_path="rank_similarity_scatter.png", max_ranks=500):
+def analyze_rank_similarity(score_matrix_path, similarity_matrix_path, output_plot_path="rank_similarity_scatter.png", max_ranks=500, sort_by_abs=False):
     """
     For each column, sort based on score_matrix, find the corresponding similarity_matrix value for each rank,
     calculate the average similarity for each rank, and draw a scatter plot.
@@ -13,6 +13,7 @@ def analyze_rank_similarity(score_matrix_path, similarity_matrix_path, output_pl
         similarity_matrix_path: path to the similarity matrix file
         output_plot_path: output plot path
         max_ranks: maximum number of ranks to analyze
+        sort_by_abs: whether to sort by absolute values
     """
     print(f"Loading score matrix: {score_matrix_path}")
     try:
@@ -52,7 +53,10 @@ def analyze_rank_similarity(score_matrix_path, similarity_matrix_path, output_pl
         similarity_col = similarity_matrix[:, col]
         
         # Sort by score in descending order to get sorted indices
-        sorted_indices = torch.argsort(score_col, descending=True)
+        if sort_by_abs:
+            sorted_indices = torch.argsort(torch.abs(score_col), descending=True)
+        else:
+            sorted_indices = torch.argsort(score_col, descending=True)
         
         # Extract corresponding similarity values based on rank
         for rank in range(max_ranks):
@@ -120,16 +124,17 @@ def analyze_rank_similarity(score_matrix_path, similarity_matrix_path, output_pl
 
 def main():
     # Define file paths
-    score_matrix_path = "/home/xiruij/anticipation/checkpoints_clap_new/score.pt"
-    similarity_matrix_path = "/home/xiruij/anticipation/checkpoints_clap_new/audio_similarity_matrix.pt"
-    output_plot_path = "/home/xiruij/anticipation/rank_similarity_scatter.png"
+    score_matrix_path = "/home/xiruij/anticipation/checkpoints_subset_large/score_LoGra_4096_gen.pt"
+    similarity_matrix_path = "/home/xiruij/anticipation/checkpoints_subset_large/audio_similarity_matrix_mert.pt"
+    output_plot_path = "/home/xiruij/anticipation/rank_similarity_large_scatter_LoGra_mert_abs.png"
     
     # Analyze the relationship between rank and similarity
     analyze_rank_similarity(
         score_matrix_path,
         similarity_matrix_path, 
         output_plot_path,
-        max_ranks=3000  # Analyze top 3000 ranks
+        max_ranks=28000,  # Analyze top 28000 ranks
+        sort_by_abs=True  # Set to True to sort by absolute values
     )
 
 if __name__ == "__main__":

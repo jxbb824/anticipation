@@ -41,8 +41,8 @@ def get_audio_features_batch(audio_paths, model, feature_extractor, device, targ
 
 def main():
     train_audio_dir = "/home/xiruij/anticipation/datasets/finetune_subset/song_train_wav"
-    test_audio_dir = "/home/xiruij/anticipation/datasets/finetune_subset/song_test_wav"
-    output_file = "/home/xiruij/anticipation/checkpoints_clap_new/audio_similarity_matrix.pt"
+    test_audio_dir = "/home/xiruij/anticipation/datasets/finetune_subset/song_gen_wav"
+    output_file = "/home/xiruij/anticipation/checkpoints_clap_new/audio_similarity_matrix_gen.pt"
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")

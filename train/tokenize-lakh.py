@@ -24,7 +24,7 @@ def main(args):
     print(f'  min track events = {MIN_TRACK_EVENTS}')
 
     paths = [os.path.join(args.datadir, s) for s in LAKH_SPLITS]
-    files = [sorted(glob(f'{p}/*.compound.txt')) for p in paths]
+    files = [sorted(glob(f'{p}/*.compound.txt'))[:70000] for p in paths]
     outputs = [os.path.join(args.datadir, f'tokenized-events-{s}.txt') for s in LAKH_SPLITS]
 
     # don't augment the valid/test splits
