@@ -13,8 +13,9 @@ parser.add_argument('--format', type=str, default='wav', choices=['wav', 'mp3'],
 args = parser.parse_args()
 
 # Define file paths
-input_file = '/home/xiruij/anticipation/datasets/finetune/test_v2.txt'
-output_dir = f'/home/xiruij/anticipation/datasets/finetune/song_test_{args.format}'
+# input_file = '/home/xiruij/anticipation/datasets/finetune/test_v2.txt'
+input_file = '/home/xiruij/anticipation/datasets/finetune/generated_samples.txt'
+output_dir = f'/home/xiruij/anticipation/datasets/finetune/song_generated_{args.format}'
 
 # Create output directory if it doesn't exist
 os.makedirs(output_dir, exist_ok=True)
@@ -23,7 +24,7 @@ os.makedirs(output_dir, exist_ok=True)
 def convert_events_to_audio(item):
     index, line, output_path = item
     events = line.split()
-    events = events[1:-1]  # Remove first and last tokens
+    # events = events[1:-1]  # Remove first and last tokens
     events = [int(event) for event in events]
     
     # Convert events to MIDI

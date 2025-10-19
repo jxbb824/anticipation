@@ -125,8 +125,8 @@ def analyze_rank_similarity(score_matrix_path, similarity_matrix_path, output_pl
 def main():
     # Define file paths
     score_matrix_path = "/home/xiruij/anticipation/checkpoints_subset_large/score_LoGra_4096_gen.pt"
-    similarity_matrix_path = "/home/xiruij/anticipation/checkpoints_subset_large/audio_similarity_matrix_mert.pt"
-    output_plot_path = "/home/xiruij/anticipation/rank_similarity_large_scatter_LoGra_mert_abs.png"
+    similarity_matrix_path = "/home/xiruij/anticipation/checkpoints_subset_large/melody_similarity_pmi.pt"
+    output_plot_path = "/home/xiruij/anticipation/rank_similarity_large_scatter_LoGra_pmi.png"
     
     # Analyze the relationship between rank and similarity
     analyze_rank_similarity(
@@ -134,7 +134,7 @@ def main():
         similarity_matrix_path, 
         output_plot_path,
         max_ranks=28000,  # Analyze top 28000 ranks
-        sort_by_abs=True  # Set to True to sort by absolute values
+        sort_by_abs=False  # Set to True to sort by absolute values
     )
 
 if __name__ == "__main__":

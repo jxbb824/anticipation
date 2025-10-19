@@ -65,8 +65,9 @@ def main():
     ext = f".{args.file_type}"
 
     train_dir = "/home/xiruij/anticipation/datasets/finetune/song_train_mp3"
-    test_dir = "/home/xiruij/anticipation/datasets/finetune/song_test_mp3"
-    out_path = "/home/xiruij/anticipation/checkpoints_subset_large/audio_similarity_all_layers.pt"
+    # test_dir = "/home/xiruij/anticipation/datasets/finetune/song_test_mp3"
+    test_dir = "/home/xiruij/anticipation/datasets/finetune/song_generated_mp3"
+    out_path = "/home/xiruij/anticipation/checkpoints_subset_large/audio_similarity_all_layers_gen.pt"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
     train_files = sorted([os.path.join(train_dir, f) for f in os.listdir(train_dir) if f.endswith(ext)])

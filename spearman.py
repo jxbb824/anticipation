@@ -45,7 +45,7 @@ def calculate_one(path):
             index.append(full_nodes.index(number))
         node_list.append(index)
 
-    loss_list = torch.load("/home/xiruij/anticipation/checkpoints_subset_large/gt.pt", map_location=torch.device('cpu')).detach()
+    loss_list = torch.load("/home/xiruij/anticipation/checkpoints_subset_large/gt_generated.pt", map_location=torch.device('cpu')).detach()
 
     approx_output = []
     for i in range(len(nodes_str)):
@@ -73,6 +73,7 @@ def calculate_one(path):
 
 
 if __name__ == "__main__":
+    # path = "/home/xiruij/anticipation/notebooks/notebook_outputs/lds_masked_sim_K1000.pt"
     path = "/home/xiruij/anticipation/checkpoints_subset_large/score_LoGra_4096_gen.pt"
     print(calculate_one(path)[0])
     # grid_search_dir = "/home/xiruij/anticipation/checkpoints/grid_search"

@@ -77,11 +77,22 @@ def compute_avg_similarity_per_rank(
 
 
 def smooth_curve(y: np.ndarray, window: int = 201) -> np.ndarray:
-    """Moving-average smoothing (odd `window`, >= 3)."""
-    if window < 3 or window % 2 == 0:
+    """Moving-average smoothing with reflection padding to avoid edge drop."""
+    n = int(len(y))
+    if n < 3:
         return y
+    # ensure odd window and not longer than the series
+    window = int(window)
+    window = max(3, min(window, n))
+    if window % 2 == 0:
+        window -= 1
+    if window < 3:
+        return y
+    half = window // 2
     box = np.ones(window, dtype=np.float32) / window
-    return np.convolve(y, box, mode="same")
+    # reflect padding (no zero-padding) to eliminate start/end dips
+    y_pad = np.pad(y.astype(np.float32), (half, half), mode="reflect")
+    return np.convolve(y_pad, box, mode="valid")
 
 
 # -----------------------------------------------------------------------------#
@@ -125,22 +136,21 @@ def main() -> None:
                 sort_by_abs=args.sort_abs,
             )
 
-            # Save individual scatter plot
-            plt.figure(figsize=(12, 8))
-            plt.scatter(ranks, avg_sim, s=15, alpha=0.6, label="samples")
-            z = np.polyfit(ranks, avg_sim, 1)
-            plt.plot(ranks, np.poly1d(z)(ranks), "r--",
-                     label=f"trend (slope={z[0]:.6f})")
-            plt.title(f"{tag}: Rank vs Avg Similarity")
-            plt.xlabel("Rank")
-            plt.ylabel("Average Similarity")
-            plt.grid(alpha=0.4)
-            plt.legend()
-            plt.tight_layout()
-            fname = os.path.join(args.out, f"{tag}.png")
-            plt.savefig(fname, dpi=300)
-            plt.close()
-            print(f"  → saved {fname}")
+            # plt.figure(figsize=(12, 8))
+            # plt.scatter(ranks, avg_sim, s=15, alpha=0.6, label="samples")
+            # z = np.polyfit(ranks, avg_sim, 1)
+            # plt.plot(ranks, np.poly1d(z)(ranks), "r--",
+            #          label=f"trend (slope={z[0]:.6f})")
+            # plt.title(f"{tag}: Rank vs Avg Similarity")
+            # plt.xlabel("Rank")
+            # plt.ylabel("Average Similarity")
+            # plt.grid(alpha=0.4)
+            # plt.legend()
+            # plt.tight_layout()
+            # fname = os.path.join(args.out, f"{tag}.png")
+            # plt.savefig(fname, dpi=300)
+            # plt.close()
+            # print(f"  → saved {fname}")
 
             all_curves.append((tag, ranks, avg_sim))
 

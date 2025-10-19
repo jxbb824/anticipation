@@ -5,15 +5,10 @@ from torch.utils.data import Dataset, DataLoader
 import os
 import argparse
 import random
-from dattri.algorithm.LoGra import LoGraAttributor
-import torch.nn as nn
-try:
-    from transformers.pytorch_utils import Conv1D
-except ImportError:
-    # For older versions of transformers
-    from transformers.modeling_utils import Conv1D
+from dattri.func.utils import flatten_func, flatten_params
+from dattri.algorithm.trak import TRAKAttributor
+from dattri.task import AttributionTask
 from anticipation.vocab import AUTOREGRESS
-
 
 class TextDataset(Dataset):
     def __init__(self, file_path, max_length=1024, num_samples=None, is_generated: bool = False):
@@ -53,86 +48,23 @@ class TextDataset(Dataset):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Calculate attribution scores using LoGra.')
+    parser = argparse.ArgumentParser(description='Calculate attribution scores using TRAK.')
     parser.add_argument('--train_file', type=str, required=True,
                         help='Path to training data.')
     parser.add_argument('--valid_file', type=str, required=True,
                         help='Path to validation data.')
     parser.add_argument('--output_dir', type=str, required=True,
                         help='Directory containing checkpoints and for saving results.')
-    parser.add_argument('--batch_size', type=int, default=8,
+    parser.add_argument('--batch_size', type=int, default=2,
                         help='Batch size for dataloaders.')
+    parser.add_argument('--num_checkpoints', type=int, default=10,
+                        help='Number of checkpoints to use.')
     parser.add_argument('--seed', type=int, default=42, help="Random seed.")
     parser.add_argument('--valid_is_generated', action='store_true',
                         help='If set, treat valid_file as generated samples: prepend AUTOREGRESS and do not drop last token.')
-    parser.add_argument('--output_filename', type=str, default='score_LoGra_4096_gen.pt',
+    parser.add_argument('--output_filename', type=str, default='score_TRAK_8192_generated.pt',
                         help='Output filename to save attribution scores.')
     return parser.parse_args()
-
-def find_layers(model, layer_type="Linear", return_type="instance"):
-    layers = []
-    return_module_name = not (return_type == "instance")
-
-    if return_module_name:
-        for module_name, module in model.named_modules():
-            if isinstance(module, nn.Linear) or isinstance(module, nn.LayerNorm) or isinstance(module, nn.Embedding):
-                layers.append((module_name, module))
-    else:
-        for module in model.modules():
-            if isinstance(module, nn.Linear) or isinstance(module, nn.LayerNorm) or isinstance(module, nn.Embedding):
-                layers.append(module)
-
-    if return_module_name:
-        if layer_type == "Linear":
-            layers = [(name, layer) for name, layer in layers if isinstance(layer, nn.Linear)]
-        elif layer_type == "Linear_LayerNorm":
-            layers = [(name, layer) for name, layer in layers if isinstance(layer, (nn.Linear, nn.LayerNorm))]
-        elif layer_type == "LayerNorm":
-            layers = [(name, layer) for name, layer in layers if isinstance(layer, nn.LayerNorm)]
-        else:
-            raise ValueError("Invalid setting now. Choose from 'Linear', 'LayerNorm', and 'Linear_LayerNorm'.")
-    else:
-        if layer_type == "Linear":
-            layers = [layer for layer in layers if isinstance(layer, nn.Linear)]
-        elif layer_type == "Linear_LayerNorm":
-            layers = [layer for layer in layers if isinstance(layer, nn.Linear) or isinstance(layer, nn.LayerNorm)]
-        elif layer_type == "LayerNorm":
-            layers = [layer for layer in layers if isinstance(layer, nn.LayerNorm)]
-        else:
-            raise ValueError("Invalid setting now. Choose from 'Linear', 'LayerNorm', and 'Linear_LayerNorm'.")
-
-    if return_type == "instance":
-        return layers
-    elif return_type == "name":
-        return [name for name, layer in layers]
-    elif return_type == "name_instance":
-        return [(name, layer) for name, layer in layers]
-    else:
-        raise ValueError("Invalid return_type. Choose from 'instance', 'name', and 'name_instance'.")
-
-def replace_conv1d_modules(model):
-    # GPT-2 is defined in terms of Conv1D. However, this does not work for EK-FAC.
-    # Here, we convert these Conv1D modules to linear modules recursively.
-    for name, module in model.named_children():
-        if len(list(module.children())) > 0:
-            replace_conv1d_modules(module)
-
-        if isinstance(module, Conv1D):
-            new_module = nn.Linear(
-                in_features=module.weight.shape[0],
-                out_features=module.weight.shape[1],
-            )
-            new_module.weight.data.copy_(module.weight.data.t())
-            new_module.bias.data.copy_(module.bias.data)
-            setattr(model, name, new_module)
-    return model
-
-class FakeAttributionTask:
-    def __init__(self, model):
-        self._model = model
-
-    def get_model(self):
-        return self._model
 
 def main():
     args = parse_args()
@@ -148,7 +80,6 @@ def main():
     print(f"Using device: {device}")
 
     train_dataset = TextDataset(args.train_file)
-    # eval_dataset = TextDataset(args.valid_file, num_samples=100)
     eval_dataset = TextDataset(args.valid_file, num_samples=500, is_generated=args.valid_is_generated)
     
     if len(train_dataset) == 0 or len(eval_dataset) == 0:
@@ -176,50 +107,71 @@ def main():
         print(f"Error: Output directory {args.output_dir} not found. Exiting.")
         return
     
+    checkpoints = [os.path.join(args.output_dir, str(i)) for i in range(args.num_checkpoints)]
+    
+    if not os.path.isdir(checkpoints[0]):
+        print(f"Error: Checkpoint directory {checkpoints[0]} not found. Exiting.")
+        return
+    
+    # Load model from output_dir/full_model
     model_path = os.path.join(args.output_dir, 'full_model')
     
     if not os.path.isdir(model_path):
         print(f"Error: Model directory {model_path} not found. Exiting.")
         return
     
+    print(f"Loading model from {model_path}...")
     model = AutoModelForCausalLM.from_pretrained(model_path, attn_implementation="eager").to(device)
     model.eval()
     
-    model = replace_conv1d_modules(model)
-    layer_names = find_layers(model, "Linear", return_type="name")
+    def f(params, batch):
+        outputs = torch.func.functional_call(model, params, batch["input_ids"].to(device),
+                                             kwargs={"attention_mask": batch["attention_mask"].to(device),
+                                                     "labels": batch["labels"].to(device)})
+        logp = -outputs.loss
+        return logp - torch.log(1 - torch.exp(logp))
+
+    def m(params, batch):
+        outputs = torch.func.functional_call(model, params, batch["input_ids"].to(device),
+                                             kwargs={"attention_mask": batch["attention_mask"].to(device),
+                                                     "labels": batch["labels"].to(device)})
+        p = torch.exp(-outputs.loss)
+        return p
     
-    task = FakeAttributionTask(model)
+    def checkpoints_load_func(model, checkpoint):
+        model = AutoModelForCausalLM.from_pretrained(checkpoint, attn_implementation="eager").to(device) # TODO: error if attn_implementation is not eager, don't know why
+        model.eval()
+        return model
+    
+    task = AttributionTask(loss_func=f, model=model,
+                           checkpoints=checkpoints,
+                           checkpoints_load_func=checkpoints_load_func)
     
     projector_kwargs = {
         "device": device,
-        "proj_dim": 4096,
+        "proj_dim": 8192,
         "use_half_precision": False,
-        "proj_max_batch_size": 32,
     }
     
-    attributor = LoGraAttributor(
+    attributor = TRAKAttributor(
         task=task,
-        layer_names=layer_names,
-        hessian="raw",
+        correct_probability_func=m,
         device=device,
         projector_kwargs=projector_kwargs,
-        offload="cpu",
-        damping=0.01,
+        regularization=0.01,
     )
     
     print("Caching train dataloader...")
     attributor.cache(train_dataloader)
     
     print("Attributing scores...")
-    # with torch.no_grad():
-    score = attributor.attribute(train_dataloader, eval_dataloader)
+    with torch.no_grad():
+        score = attributor.attribute(eval_dataloader)
     
     output_score_file = os.path.join(args.output_dir, args.output_filename)
     torch.save(score, output_score_file)
     print(f"Results saved to {output_score_file}")
     print(f"Score shape: {score.shape}")
-    
-    print("Processing completed.")
 
 if __name__ == "__main__":
     main()

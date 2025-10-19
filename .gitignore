@@ -174,7 +174,7 @@ cython_debug/
 .pypirc
 
 tmp.*
-*.ipynb
+# *.ipynb
 *.slurm
 test.*
 *.out
@@ -192,3 +192,10 @@ checkpoints_clap_new/
 *.wav
 extracted_music_samples/
 checkpoints_subset_large/
+notebooks/notebook_outputs/
+decode_triplet.py
+*.csv
+checkpoints_tracin/
+analysis_results/
+notebooks/
+view_training_args.py

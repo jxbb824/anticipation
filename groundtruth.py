@@ -7,11 +7,13 @@ import argparse
 import random
 # Assuming dattri.func.utils are available in the environment
 from dattri.func.utils import flatten_func, flatten_params
+from anticipation.vocab import AUTOREGRESS
 
 class TextDataset(Dataset):
-    def __init__(self, file_path, max_length=1024, num_samples=None):
+    def __init__(self, file_path, max_length=1024, num_samples=None, is_generated: bool = False):
         self.examples = []
         self.max_length = max_length
+        self.is_generated = is_generated
         
         print(f"Loading dataset: {file_path}")
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -26,11 +28,19 @@ class TextDataset(Dataset):
         return len(self.examples)
     
     def __getitem__(self, idx):
-        safe_text = " ".join(self.examples[idx].split()[:-1])
-        input_ids = np.fromstring(safe_text, dtype=int, sep=" ")
+        if self.is_generated:
+            # generated_samples.txt: first/last tokens missing → prepend AUTOREGRESS; keep all tokens
+            arr = np.fromstring(self.examples[idx], dtype=int, sep=" ")
+            if arr.size == 0:
+                input_ids = np.array([AUTOREGRESS], dtype=int)
+            else:
+                input_ids = np.concatenate([np.array([AUTOREGRESS], dtype=int), arr])
+        else:
+            # standard format: drop last token (file id)
+            safe_text = " ".join(self.examples[idx].split()[:-1])
+            input_ids = np.fromstring(safe_text, dtype=int, sep=" ")
         input_ids = input_ids[:self.max_length]
         
-        # For Causal LM, labels are typically the same as input_ids
         return {"input_ids": torch.tensor(input_ids, dtype=torch.long),
                 "labels": torch.tensor(input_ids, dtype=torch.long),
                 "attention_mask": torch.ones_like(torch.tensor(input_ids, dtype=torch.long))}
@@ -45,6 +55,8 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=1, # Snippet implies batch_size=1 for eval_dataloader
                         help='Batch size for evaluation dataloader.')
     parser.add_argument('--seed', type=int, default=42, help="Random seed.")
+    parser.add_argument('--valid_is_generated', action='store_true',
+                        help='If set, treat valid_file as generated samples: prepend AUTOREGRESS and do not drop last token.')
     return parser.parse_args()
 
 def main():
@@ -61,7 +73,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    eval_dataset = TextDataset(args.valid_file, num_samples=500) 
+    eval_dataset = TextDataset(args.valid_file, num_samples=500, is_generated=args.valid_is_generated) 
     if len(eval_dataset) == 0:
         print(f"Error: Validation dataset from {args.valid_file} is empty or failed to load. Exiting.")
         return
@@ -120,7 +132,7 @@ def main():
     final_result = torch.stack(result_list)
 
     print(f"Final result: {final_result}")
-    output_gt_file = os.path.join(args.output_dir, "gt.pt")
+    output_gt_file = os.path.join(args.output_dir, "gt_generated.pt")
     torch.save(final_result, output_gt_file)
     print(f"Results saved to {output_gt_file}")
     print(f"Result shape: {final_result.shape}")

@@ -67,7 +67,7 @@ from transformers import AutoModelForCausalLM
 
 # model = AutoModelForCausalLM.from_pretrained('stanford-crfm/music-small-800k').cuda()
 # model = AutoModelForCausalLM.from_pretrained('/home/xiruij/anticipation/finetune_subset_output/final_model')
-model = AutoModelForCausalLM.from_pretrained('/home/xiruij/anticipation/checkpoints_subset_large/full_model').cuda()
+model = AutoModelForCausalLM.from_pretrained('/home/xiruij/anticipation/checkpoints_subset_large/full_model')
 # print(vars(model)['_modules'])
 from anticipation.sample import generate
 from anticipation.convert import events_to_midi
