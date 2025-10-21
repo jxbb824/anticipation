@@ -58,6 +58,7 @@ def calculate_one(path):
 
     res = 0
     counter = 0
+    sample_scores = []  # Store (sample_idx, spearman_score) pairs
     for i in range(500):
         tmp = spearmanr(np.array([approx_output[k][i] for k in range(len(approx_output))]),
                         np.array([loss_list[k][i].numpy() for k in range(len(loss_list))])).statistic
@@ -66,15 +67,22 @@ def calculate_one(path):
             continue
         res += tmp
         counter += 1
+        sample_scores.append((i, tmp))
 
     print(counter)
+    
+    # Find samples with lowest spearman correlation
+    sample_scores.sort(key=lambda x: x[1])
+    print(f"Samples with lowest spearman correlation (top 10):")
+    for idx, score in sample_scores[:10]:
+        print(f"  Sample {idx}: {score:.4f}")
 
     return res/counter, loss_list, approx_output
 
 
 if __name__ == "__main__":
     # path = "/home/xiruij/anticipation/notebooks/notebook_outputs/lds_masked_sim_K1000.pt"
-    path = "/home/xiruij/anticipation/checkpoints_subset_large/score_LoGra_4096_gen.pt"
+    path = "checkpoints_subset_large/lds_matrices/lds_masked_melody_similarity_pmi_gen_similarity_K100.pt"
     print(calculate_one(path)[0])
     # grid_search_dir = "/home/xiruij/anticipation/checkpoints/grid_search"
     # file_paths = glob.glob(os.path.join(grid_search_dir, "*.pt"))

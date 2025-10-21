@@ -58,8 +58,10 @@ def parse_args():
                         help='Path to training data.')
     parser.add_argument('--valid_file', type=str, required=True,
                         help='Path to validation data.')
+    parser.add_argument('--model_path', type=str, required=True,
+                        help='Path to the pretrained model directory.')
     parser.add_argument('--output_dir', type=str, required=True,
-                        help='Directory containing checkpoints and for saving results.')
+                        help='Directory for saving results.')
     parser.add_argument('--batch_size', type=int, default=8,
                         help='Batch size for dataloaders.')
     parser.add_argument('--seed', type=int, default=42, help="Random seed.")
@@ -172,17 +174,15 @@ def main():
         shuffle=False
     )
 
+    if not os.path.isdir(args.model_path):
+        print(f"Error: Model directory {args.model_path} not found. Exiting.")
+        return
+    
     if not os.path.isdir(args.output_dir):
         print(f"Error: Output directory {args.output_dir} not found. Exiting.")
         return
     
-    model_path = os.path.join(args.output_dir, 'full_model')
-    
-    if not os.path.isdir(model_path):
-        print(f"Error: Model directory {model_path} not found. Exiting.")
-        return
-    
-    model = AutoModelForCausalLM.from_pretrained(model_path, attn_implementation="eager").to(device)
+    model = AutoModelForCausalLM.from_pretrained(args.model_path, attn_implementation="eager").to(device)
     model.eval()
     
     model = replace_conv1d_modules(model)

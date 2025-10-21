@@ -35,6 +35,27 @@ def analyze_rank_similarity(score_matrix_path, similarity_matrix_path, output_pl
         print(f"Error loading similarity matrix: {e}")
         return
 
+    # Handle multi-dimensional similarity matrices (e.g., shape: (layers, pooling_types, a, b))
+    # Automatically extract the last layer's max pooling result
+    if similarity_matrix.dim() == 4:
+        original_shape = similarity_matrix.shape
+        print(f"Detected 4D similarity matrix with shape {original_shape}")
+        print(f"Extracting last layer (index -1) and max pooling (index 1)...")
+        similarity_matrix = similarity_matrix[-1, 0, :, :]  # Last layer, max pooling
+        print(f"Extracted similarity matrix shape: {similarity_matrix.shape}")
+    elif similarity_matrix.dim() == 3:
+        original_shape = similarity_matrix.shape
+        print(f"Detected 3D similarity matrix with shape {original_shape}")
+        print(f"Extracting last dimension slice [−1, :, :]...")
+        similarity_matrix = similarity_matrix[-1, :, :]
+        print(f"Extracted similarity matrix shape: {similarity_matrix.shape}")
+
+    # Limit the last dimension (columns) to 500
+    if similarity_matrix.shape[1] > 500:
+        print(f"Limiting similarity matrix columns from {similarity_matrix.shape[1]} to 500")
+        similarity_matrix = similarity_matrix[:, :500]
+        score_matrix = score_matrix[:, :500]
+    
     if score_matrix.shape != similarity_matrix.shape:
         print(f"Error: Matrix shapes do not match. Score shape: {score_matrix.shape}, Similarity shape: {similarity_matrix.shape}")
         return
@@ -124,7 +145,11 @@ def analyze_rank_similarity(score_matrix_path, similarity_matrix_path, output_pl
 
 def main():
     # Define file paths
-    score_matrix_path = "/home/xiruij/anticipation/checkpoints_subset_large/score_LoGra_4096_gen.pt"
+    # score_matrix_path = "/home/xiruij/anticipation/checkpoints_subset_large/score_LoGra_4096_gen.pt"
+    # similarity_matrix_path = "/home/xiruij/anticipation/checkpoints_subset_large/audio_similarity_all_layers_gen.pt"
+    # output_plot_path = "/home/xiruij/anticipation/rank_similarity_large_scatter_LoGra_gen_mean.png"
+
+    score_matrix_path = "/home/xiruij/anticipation/checkpoints_subset_large/score_LoGra_4096.pt"
     similarity_matrix_path = "/home/xiruij/anticipation/checkpoints_subset_large/melody_similarity_pmi.pt"
     output_plot_path = "/home/xiruij/anticipation/rank_similarity_large_scatter_LoGra_pmi.png"
     
