@@ -199,3 +199,13 @@ checkpoints_tracin/
 analysis_results/
 notebooks/
 view_training_args.py
+extracted_pairs_output/
+evaluation_package/
+test_*.py
+*_test.py
+exp_causal_similarity/
+*.pdf
+human_eval_mapping/
+human_eval_package/
+anticipation/human_eval_ui/
+*.zip

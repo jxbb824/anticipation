@@ -132,7 +132,7 @@ def main():
     final_result = torch.stack(result_list)
 
     print(f"Final result: {final_result}")
-    output_gt_file = os.path.join(args.output_dir, "gt_generated.pt")
+    output_gt_file = os.path.join(args.output_dir, "gt_gen.pt")
     torch.save(final_result, output_gt_file)
     print(f"Results saved to {output_gt_file}")
     print(f"Result shape: {final_result.shape}")

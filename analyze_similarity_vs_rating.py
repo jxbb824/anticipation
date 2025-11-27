@@ -405,21 +405,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
-    # Create visualizations as separate plots
-    print("\nCreating scatter plot...")
-    create_scatter_plot(combined_df, stats_results, output_dir)
-    
-    print("\nCreating boxplot...")
-    create_boxplot(combined_df, output_dir)
-    
-    # Save combined data with bins
-    combined_df_with_bins = create_similarity_bins(combined_df.copy())
-    combined_df_with_bins.to_csv(f'{output_dir}/combined_similarity_rating_data.csv', index=False)
-    
-    print(f"\nAnalysis complete! Results saved to: {output_dir}")
-    print(f"  - Scatter plot: scatter_plot_similarity_vs_rating.png")
-    print(f"  - Boxplot: boxplot_similarity_bins.png")
-
-if __name__ == "__main__":
-    main()

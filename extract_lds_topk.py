@@ -7,10 +7,10 @@ from pathlib import Path
 
 # ==================== Configuration ====================
 SCORE_PT = "/home/xiruij/anticipation/checkpoints_subset_large/score_LoGra_4096_gen.pt"
-SIM_PT = "/home/xiruij/anticipation/checkpoints_subset_large/melody_similarity_pmi_gen.pt"
+SIM_PT = "/home/xiruij/anticipation/checkpoints_subset_large/audio_similarity_all_layers_gen_prompted.pt"
 LAYER_INDEX = 25  # Layer to use (1-based indexing), only for 4D similarity matrix
 POOLING_INDEX = 0  # 0=mean, 1=max, only for 4D similarity matrix
-TOP_KS = [100, 1000, 3000, 28000]  # List of Top-K values to extract
+TOP_KS = [28000]  # List of Top-K values to extract
 OUTPUT_DIR = Path("./checkpoints_subset_large/lds_matrices")
 USE_SIMILARITY_RANKING = True  # True: rank by similarity values, False: rank by score values
 
