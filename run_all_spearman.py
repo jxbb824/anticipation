@@ -1,4 +1,6 @@
 import torch
+import numpy as np
+from scipy.stats import spearmanr, combine_pvalues
 from spearman import calculate_one
 import spearman
 
@@ -26,20 +28,22 @@ def calculate_with_custom_loss(path, loss_path):
         sum_0 = torch.sum(score_approx_0, axis=0)
         approx_output.append(sum_0)
     
-    res = 0
-    counter = 0
-    from scipy.stats import spearmanr
-    import numpy as np
-    
+    stats = []
+    pvalues = []
     for i in range(500):
-        tmp = spearmanr(np.array([approx_output[k][i] for k in range(len(approx_output))]),
-                        np.array([loss_list[k][i].numpy() for k in range(len(loss_list))])).statistic
-        if np.isnan(tmp):
+        x = np.array([approx_output[k][i].item() for k in range(len(approx_output))])
+        y = np.array([loss_list[k][i].item() for k in range(len(loss_list))])
+        stat, pval = spearmanr(x, y)
+        if np.isnan(stat) or np.isnan(pval):
             continue
-        res += tmp
-        counter += 1
+        stats.append(stat)
+        pvalues.append(max(pval, np.finfo(float).tiny))
     
-    return res/counter
+    avg_stat = float(np.mean(stats)) if stats else float('nan')
+    fisher_p = combine_pvalues(pvalues, method='fisher')[1] if pvalues else float('nan')
+    fisher_p = max(fisher_p, np.finfo(float).tiny) if not np.isnan(fisher_p) else fisher_p
+    
+    return avg_stat, fisher_p
 
 if __name__ == "__main__":
     base_path = "/home/xiruij/anticipation/checkpoints_subset_large"
@@ -60,16 +64,15 @@ if __name__ == "__main__":
         ("Random", "Generation", "random_gen", f"{base_path}/gt_gen_prompted.pt"),
     ]
     
-    print(f"{'Model':<15} {'Type':<15} {'Spearman':>10}")
-    print("-" * 45)
+    print(f"{'Model':<15} {'Type':<15} {'Spearman':>10} {'p-value':>16}")
+    print("-" * 60)
     
     for model, data_type, score_path, loss_path in configs:
         if score_path.startswith("random"):
             random_matrix = torch.rand(28000, 500)
             temp_path = "/tmp/random_matrix_temp.pt"
             torch.save(random_matrix, temp_path)
-            result = calculate_with_custom_loss(temp_path, loss_path)
+            result, pvalue = calculate_with_custom_loss(temp_path, loss_path)
         else:
-            result = calculate_with_custom_loss(score_path, loss_path)
-        print(f"{model:<15} {data_type:<15} {result:>10.3f}")
-
+            result, pvalue = calculate_with_custom_loss(score_path, loss_path)
+        print(f"{model:<15} {data_type:<15} {result:>10.3f} {pvalue:>16.6e}")
