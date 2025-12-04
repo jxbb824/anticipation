@@ -61,17 +61,19 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--file_type", default="mp3", choices=["wav", "mp3"])
     ap.add_argument("--batch", type=int, default=8)
+    ap.add_argument("--train_dir", required=True, help="Directory of training audio files.")
+    ap.add_argument("--test_dir", required=True, help="Directory of test audio files.")
+    ap.add_argument("--output", required=True, help="Path to save the similarity tensor.")
     args = ap.parse_args()
     ext = f".{args.file_type}"
 
-    train_dir = "/home/xiruij/anticipation/datasets/finetune/song_train_mp3_improved"
-    # test_dir = "/home/xiruij/anticipation/datasets/finetune/song_test_mp3"
-    test_dir = "/home/xiruij/anticipation/datasets/finetune/song_test_mp3_improved"
-    out_path = "/home/xiruij/anticipation/checkpoints_subset_large/audio_similarity_all_layers_test_improved.pt"
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    out_path = args.output
+    out_dir = os.path.dirname(out_path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
 
-    train_files = sorted([os.path.join(train_dir, f) for f in os.listdir(train_dir) if f.endswith(ext)])
-    test_files  = sorted([os.path.join(test_dir,  f) for f in os.listdir(test_dir)  if f.endswith(ext)])[:500]
+    train_files = sorted([os.path.join(args.train_dir, f) for f in os.listdir(args.train_dir) if f.endswith(ext)])
+    test_files  = sorted([os.path.join(args.test_dir,  f) for f in os.listdir(args.test_dir)  if f.endswith(ext)])[:500]
 
     if not train_files or not test_files:
         raise RuntimeError("No audio files found. Check paths and --file_type.")

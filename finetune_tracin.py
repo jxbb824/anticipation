@@ -88,11 +88,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Fine-tune GPT-2 model with TracIn checkpoints (minimal diff).')
     parser.add_argument('--pretrained_model_path', type=str, default='stanford-crfm/music-small-800k',
                         help='Path to pretrained model or model identifier from huggingface.co/models.')
-    parser.add_argument('--train_file', type=str, 
-                        default='/home/xiruij/anticipation/datasets/finetune/train_v2.txt',
+    parser.add_argument('--train_file', type=str, required=True,
                         help='Path to training data')
-    parser.add_argument('--valid_file', type=str, 
-                        default='/home/xiruij/anticipation/datasets/finetune/test_v2.txt',
+    parser.add_argument('--valid_file', type=str, required=True,
                         help='Path to validation data')
     parser.add_argument('--output_dir', type=str, 
                         default='./finetune_subset_output',
@@ -282,5 +280,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

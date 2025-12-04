@@ -58,14 +58,11 @@ def main():
                         help="Audio file format")
     parser.add_argument("--batch", type=int, default=16, 
                         help="Batch size for processing")
-    parser.add_argument("--train_dir", type=str, 
-                        default="/home/xiruij/anticipation/datasets/finetune/song_train_mp3",
+    parser.add_argument("--train_dir", type=str, required=True,
                         help="Training audio directory")
-    parser.add_argument("--test_dir", type=str,
-                        default="/home/xiruij/anticipation/datasets/finetune/song_test_mp3",
+    parser.add_argument("--test_dir", type=str, required=True,
                         help="Test audio directory")
-    parser.add_argument("--output", type=str,
-                        default="/home/xiruij/anticipation/checkpoints_subset_large/audio_similarity_clap.pt",
+    parser.add_argument("--output", type=str, required=True,
                         help="Output file path")
     args = parser.parse_args()
     

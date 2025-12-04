@@ -203,9 +203,9 @@ def compute_pid4_matrix(train_tokens, test_tokens, target_instr=66, gop=12, gep=
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--train_file', type=str, default='/home/xiruij/anticipation/datasets/finetune/train_v2.txt')
-    ap.add_argument('--test_file', type=str, default='/home/xiruij/anticipation/datasets/finetune/generated_samples.txt')
-    ap.add_argument('--out_path', type=str, default='/home/xiruij/anticipation/checkpoints_subset_large/melody_similarity_pmi_gen.pt')
+    ap.add_argument('--train_file', type=str, required=True)
+    ap.add_argument('--test_file', type=str, required=True)
+    ap.add_argument('--out_path', type=str, required=True)
     ap.add_argument('--target_instr', type=int, default=66)
     ap.add_argument('--max_test', type=int, default=500)
     ap.add_argument('--gop', type=int, default=12)

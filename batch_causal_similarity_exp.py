@@ -179,17 +179,13 @@ def parse_args():
     parser.add_argument('--test_idx', type=int, required=True, help='Test sample index')
     parser.add_argument('--output_dir', type=str, default='./exp_causal_similarity',
                         help='Base output directory for all experiments')
-    parser.add_argument('--train_file', type=str, 
-                        default='/home/xiruij/anticipation/datasets/finetune/train_v2.txt',
+    parser.add_argument('--train_file', type=str, required=True,
                         help='Training data file')
-    parser.add_argument('--valid_file', type=str,
-                        default='/home/xiruij/anticipation/datasets/finetune/test_v2.txt',
+    parser.add_argument('--valid_file', type=str, required=True,
                         help='Validation data file')
-    parser.add_argument('--gen_file', type=str,
-                        default='/home/xiruij/anticipation/datasets/finetune/generated_samples_prompted.txt',
+    parser.add_argument('--gen_file', type=str, required=True,
                         help='Generated samples file for LoGra and evaluation')
-    parser.add_argument('--sim_pt', type=str,
-                        default='/home/xiruij/anticipation/checkpoints_subset_large/audio_similarity_all_layers_gen_prompted.pt',
+    parser.add_argument('--sim_pt', type=str, required=True,
                         help='Pre-computed similarity matrix')
     parser.add_argument('--layer_index', type=int, default=25, help='Layer index for similarity (1-based)')
     parser.add_argument('--pooling_index', type=int, default=0, help='Pooling index (0=mean, 1=max)')
@@ -374,4 +370,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

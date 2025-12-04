@@ -15,9 +15,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Generate continuations conditioned on test prompts (clean 1023-token outputs).')
     parser.add_argument('--model_path', type=str, required=True,
                         help='Path to the pretrained model.')
-    parser.add_argument('--source_file', type=str, default='/home/xiruij/anticipation/datasets/finetune/test_v2.txt',
+    parser.add_argument('--source_file', type=str, required=True,
                         help='Source prompts file (tokenized, first token is mode flag, last field is an identifier).')
-    parser.add_argument('--output_file', type=str, default='/home/xiruij/anticipation/datasets/finetune/generated_samples_prompted.txt',
+    parser.add_argument('--output_file', type=str, required=True,
                         help='Output file path for generated samples (each line has exactly sequence_length tokens).')
     parser.add_argument('--num_prompts', type=int, default=500,
                         help='How many prompt lines to read from source_file.')
@@ -159,5 +159,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 

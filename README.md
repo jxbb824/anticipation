@@ -1,3 +1,12 @@
+Note: This repository extends the upstream Anticipatory Music Transformer project; the guide below is intended for new users to set up and experiment with the code.
+
+- Install: `pip install -r requirements.txt && pip install -e .`; ensure the `dattri` package is installed for LoGra/TracIn/TRAK attribution scripts.
+- Fine-tune: `python finetune.py --train_file <train.txt> --valid_file <valid.txt> --output_dir <out_dir> [--exclude_indices ...]`. For TracIn checkpoints use `finetune_tracin.py`.
+- Generate samples: `python generate_samples.py --model_path <model_dir> --output_file <samples.txt>`. Prompt-conditioned generation: `python generate_prompted_samples.py --model_path <model_dir> --source_file <prompts.txt> --output_file <samples.txt>`.
+- Attribution scores: `score.py` (LoGra), `score_trak.py` (TRAK), and `score_tracin.py` (TracIn) accept explicit train/valid/model paths and emit `.pt` score matrices.
+- Similarity matrices: `calculate_audio_similarity.py` (CLAP) and `calculate_audio_similarity_mert.py` (MERT) take train/test audio dirs; `calculate_melody_similarity_pmi.py` computes PMI melody similarity from train/test token files.
+- Analysis/plots: `analyze_rank_similarity_multi.py` draws similarity-vs-rank curves from score/similarity tensors; `batch_causal_similarity_exp.py` runs the HALS removal experiment end-to-end given train/valid/generated paths and a similarity tensor.
+
 # Anticipatory Music Transformer
 
 Implementation of the methods described in [Anticipatory Music Transformer](https://arxiv.org/abs/2306.08620).
